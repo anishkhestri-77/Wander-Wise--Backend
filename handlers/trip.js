@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { acceptInvite, create, destroy, getAll, getOne, inviteCollaborator, update } from "../services/trip.js";
+import { acceptInvite, addExpense, create, destroy, getAll, getOne, inviteCollaborator, update } from "../services/trip.js";
 import { createTripValidator, updateTripValidator } from "../validators/trip.js";
 
 const TRIP_ROUTER = Router();
@@ -92,5 +92,17 @@ TRIP_ROUTER.get(
       next(error);
     }
 })
+
+TRIP_ROUTER.patch(
+  "/:id/expenses",
+  async (req, res, next) => {
+    try {
+      const result = await addExpense(req.params.id, req.body, req.user);
+      res.status(200).json({ data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 export default TRIP_ROUTER;
