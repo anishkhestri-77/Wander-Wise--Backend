@@ -14,7 +14,7 @@ export const createItineraryValidator = [
     .trim()
     .notEmpty()
     .withMessage("Date is required")
-    .isDate()
+    .toDate()
     .withMessage("Date must be a date"),
   body("activities").isArray().withMessage("Activities must be an array"),
   body("activities.*.name")
@@ -45,7 +45,7 @@ export const updateItineraryValidator = [
     .withMessage("Itinerary must be a valid MongoDB ID"),
   body("title").trim().optional(),
   body("description").trim().optional(),
-  body("date").trim().optional().isDate().withMessage("Date must be a date"),
+  body("date").trim().optional(),
   body("activities").isArray().withMessage("Activities must be an array"),
   body("activities.*.name").trim().optional(),
   body("activities.*.time").trim().optional(),

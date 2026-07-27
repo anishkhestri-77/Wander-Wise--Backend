@@ -13,13 +13,13 @@ const BaggageSchema = new Schema(
     },
     user: {
       type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      ref : "User",
+      required :true,
     },
-    trip: {
+    trip:{
       type: Schema.Types.ObjectId,
-      ref: "Trip",
-      required: true,
+      ref:"Trip",
+      required:true,
     }
   },
   {

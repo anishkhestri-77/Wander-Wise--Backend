@@ -3,6 +3,9 @@ import { NotFoundError } from "../errors/not-found.js";
 import { ConflictError } from "../errors/conflict.js";
 import { generateAccessToken, verifyAccessToken } from "../config/jwt.js";
 import sendMail from "../utils/send-mail.js";
+//import { uploadFile } from "../utils/upload-file.js";
+
+
 
 export const create = async (data, userId) => {
   const trip = await Trip.create({ ...data, user: userId });
@@ -57,10 +60,22 @@ export const inviteCollaborator = async (id, userId, collaboratorEmails) => {
   ) {
     throw new ConflictError("Collaborator already invited");
   }
+// export const uploadFiles= async (tripId,files,userId)=>{
+//     const trip = await Trip.findOne(tripId,userId);
 
+//     await promises.all(
+//       files.map(async(file)=>{
+//         const result= await uploadFile(file.path,`trips/${trip.title}_${tripId}`);
+//         trip.files.push({
+//           url:result.secure_url,
+//           publicId:result.public_id,
+//         });
+//       })
+//     )
+//   }
   const token = await generateAccessToken({ tripId: id }, '1h');
 
-  const invitationLink = `${process.env.BASE_URL}/trips/${id}/invite/accept?token=${token}`;
+  const invitationLink = `${process.env.FRONTEND_URL}/trips/${id}/invite/accept?token=${token}`;
 
   await sendMail(collaboratorEmails.join(","), "Invitation to join a trip", {
     link: invitationLink,
@@ -78,6 +93,8 @@ export const acceptInvite = async (token, userId) => {
   const trip = await Trip.findOne({ _id: tripId }).populate(
     "collaborators"
   );
+
+  e
 
   if (!trip) throw new NotFoundError("Trip not found");
   if (
