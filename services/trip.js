@@ -1,24 +1,25 @@
+
 import Trip from "../models/trip.js";
 import { NotFoundError } from "../errors/not-found.js";
 import { ConflictError } from "../errors/conflict.js";
 import { generateAccessToken, verifyAccessToken } from "../config/jwt.js";
 import sendMail from "../utils/send-mail.js";
-//import { uploadFile } from "../utils/upload-file.js";
-
-
-
+import { uploadImage } from "../utils/upload-file.js";
+ 
+ 
+ 
 export const create = async (data, userId) => {
   const trip = await Trip.create({ ...data, user: userId });
   return trip;
 };
-
+ 
 export const getAll = async (userId) => {
   const trips = await Trip.find({
     $or: [{ user: userId }, { collaborators: userId }],
   });
   return trips;
 };
-
+ 
 export const getOne = async (id, userId) => {
   const trip = await Trip.findOne({
     _id: id,
@@ -33,7 +34,7 @@ export const getOne = async (id, userId) => {
   if (!trip) throw new NotFoundError("Trip not found");
   return trip;
 };
-
+ 
 export const update = async (id, tripData, userId) => {
   const trip = await Trip.findOneAndUpdate(
     { _id: id, user: userId },
@@ -43,16 +44,34 @@ export const update = async (id, tripData, userId) => {
   if (!trip) throw new NotFoundError("Trip not found");
   return trip;
 };
-
+ 
 export const destroy = async (id, userId) => {
   const trip = await Trip.findOneAndDelete({ _id: id, user: userId });
   if (!trip)throw new NotFoundError("Trip not found");
   return trip;
 };
-
+ 
+export const uploadFiles = async (tripId, files, userId) => {
+  const trip = await Trip.findOne({ _id: tripId, user: userId });
+  if (!trip) throw new NotFoundError("Trip not found");
+ 
+  await Promise.all(
+    files.map(async (file) => {
+      const result = await uploadFile(file.path, `trips/${trip.title}_${tripId}`);
+      trip.files.push({
+        url: result.secure_url,
+        publicId: result.public_id,
+      });
+    })
+  );
+ 
+  await trip.save();
+  return trip;
+};
+ 
 export const inviteCollaborator = async (id, userId, collaboratorEmails) => {
   const trip = await getOne(id, userId);
-
+ 
   if (
     trip.collaborators?.some((collaborator) =>
       collaboratorEmails.includes(collaborator.email)
@@ -60,23 +79,11 @@ export const inviteCollaborator = async (id, userId, collaboratorEmails) => {
   ) {
     throw new ConflictError("Collaborator already invited");
   }
-// export const uploadFiles= async (tripId,files,userId)=>{
-//     const trip = await Trip.findOne(tripId,userId);
-
-//     await promises.all(
-//       files.map(async(file)=>{
-//         const result= await uploadFile(file.path,`trips/${trip.title}_${tripId}`);
-//         trip.files.push({
-//           url:result.secure_url,
-//           publicId:result.public_id,
-//         });
-//       })
-//     )
-//   }
+ 
   const token = await generateAccessToken({ tripId: id }, '1h');
-
+ 
   const invitationLink = `${process.env.FRONTEND_URL}/trips/${id}/invite/accept?token=${token}`;
-
+ 
   await sendMail(collaboratorEmails.join(","), "Invitation to join a trip", {
     link: invitationLink,
     title: trip.title,
@@ -84,18 +91,16 @@ export const inviteCollaborator = async (id, userId, collaboratorEmails) => {
     endDate: trip.endDate.toDateString(),
     name: trip.user.name,
   });
-
+ 
   return { message: "Collaborators invited successfully" };
 }
-
+ 
 export const acceptInvite = async (token, userId) => {
   const tripId = verifyAccessToken(token);
   const trip = await Trip.findOne({ _id: tripId }).populate(
     "collaborators"
   );
-
-  e
-
+ 
   if (!trip) throw new NotFoundError("Trip not found");
   if (
     trip.collaborators.some(
@@ -104,26 +109,26 @@ export const acceptInvite = async (token, userId) => {
   ) {
     throw new ConflictError("User already a collaborator");
   }
-
+ 
   trip.collaborators.push(userId);
   await trip.save();
-
+ 
   return { message: "Invitation accepted successfully" };
 }
-
+ 
 export const addExpense = async (tripId, expenseData, userId) => {
-
+ 
   const trip = await Trip.findOne({
     _id: tripId,
     $or: [{ user: userId }, { collaborators: userId }],
   });
-
+ 
   if (!trip) throw new NotFoundError("Trip not found");
-
+ 
   trip.budget.expenses.push(expenseData);
   trip.budget.spent += expenseData.amount;
   await trip.save();
-
+ 
   return { message: "Expense added successfully", trip };
-
+ 
 }
