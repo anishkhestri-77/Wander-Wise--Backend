@@ -13,7 +13,7 @@ export const create = async (data, tripId, userId) => {
     throw new ValidationError("Itinerary date must be within the trip dates");
   }
 
-  const itinerary = await Itinerary.create(data);
+  const itinerary = await Itinerary.create({...data,trip:tripId});
   return itinerary;
 };
 
