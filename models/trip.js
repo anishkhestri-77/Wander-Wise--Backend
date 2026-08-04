@@ -66,6 +66,12 @@ const TripSchema = new Schema({
       trim: true,
     },
   ],
+
+  files:[
+    {
+      type :String,
+    }
+  ],
   budget: BudgetSchema,
   collaborators: [
     {
